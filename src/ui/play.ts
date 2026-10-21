@@ -74,29 +74,33 @@ export async function accountView(): Promise<View> {
 
     if (!me) {
       const email = h('input', { class: 'field', type: 'email', placeholder: 'you@example.com', autocomplete: 'email', 'aria-label': 'Email', required: true }) as HTMLInputElement;
-      box.replaceChildren(
-        h('button', { class: 'btn primary big block', type: 'button', 'data-testid': 'google', onclick: () => net.signInWithGoogle().catch(fail) }, 'Continue with Google'),
-        h('p', { class: 'or dim mono' }, 'or'),
-        h(
-          'form',
-          {
-            class: 'stack',
-            onsubmit: async (e: Event) => {
-              e.preventDefault();
-              try {
-                await net.signInWithEmail(email.value.trim());
-                msg.className = 'dim';
-                msg.textContent = `A sign-in link is on its way to ${email.value.trim()}. Open it on this device.`;
-              } catch (err) {
-                fail(err);
-              }
-            },
+      // The Google button shows only once Google sign-in is switched on in the project.
+      const google = await net.googleEnabled();
+      const form = h(
+        'form',
+        {
+          class: 'stack',
+          onsubmit: async (e: Event) => {
+            e.preventDefault();
+            try {
+              await net.signInWithEmail(email.value.trim());
+              msg.className = 'dim';
+              msg.textContent = `A sign-in link is on its way to ${email.value.trim()}. Open it on this device.`;
+            } catch (err) {
+              fail(err);
+            }
           },
-          email,
-          h('button', { class: 'btn block', type: 'submit' }, 'Email me a sign-in link'),
-        ),
-        msg,
+        },
+        email,
+        h('button', { class: `btn block${google ? '' : ' primary'}`, type: 'submit', 'data-testid': 'email-link' }, 'Email me a sign-in link'),
       );
+      box.replaceChildren(form, msg);
+      if (google) {
+        box.prepend(
+          h('button', { class: 'btn primary big block', type: 'button', 'data-testid': 'google', onclick: () => net.signInWithGoogle().catch(fail) }, 'Continue with Google'),
+          h('p', { class: 'or dim mono' }, 'or'),
+        );
+      }
       return;
     }
 

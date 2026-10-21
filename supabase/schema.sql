@@ -5,18 +5,18 @@
 -- Clients never write tables directly. Every write goes through a function below, which checks
 -- who is calling (auth.uid()) and whether the numbers are believable.
 
-create extension if not exists citext;
-
 -- ---------- Profiles ----------
 create table if not exists public.profiles (
   id uuid primary key references auth.users on delete cascade,
-  username citext unique,
+  username text,
   rating int not null default 1200,
   games int not null default 0,
   wins int not null default 0,
   created_at timestamptz not null default now(),
   constraint username_shape check (username is null or username ~ '^[A-Za-z0-9_]{3,16}$')
 );
+-- Names are unique ignoring case: Rey and rey are the same player.
+create unique index if not exists profiles_username on public.profiles (lower(username));
 
 -- A profile for every new account; the player picks a username afterwards.
 create or replace function public.handle_new_user() returns trigger
@@ -84,22 +84,23 @@ end $$;
 
 -- Each player's best, all time or in the last 7 days.
 drop function if exists public.leaderboard(text, int);
+drop function if exists public.top_scores(text, int);
 create or replace function public.top_scores(span text default 'all', lim int default 50)
-returns table (username citext, score int, rating int, at timestamptz)
+returns table (username text, score int, rating int, played_at timestamptz)
 language sql stable security definer set search_path = public as $$
   select * from (
-    select distinct on (p.id) p.username, s.score, p.rating, s.created_at as at
+    select distinct on (p.id) p.username, s.score, p.rating, s.created_at as played_at
     from scores s join profiles p on p.id = s.user_id
     where p.username is not null
       and (span = 'all' or s.created_at > now() - interval '7 days')
     order by p.id, s.score desc, s.created_at
   ) best
-  order by score desc, at
+  order by score desc, played_at
   limit least(lim, 100)
 $$;
 
 create or replace function public.top_ratings(lim int default 50)
-returns table (username citext, rating int, games int, wins int)
+returns table (username text, rating int, games int, wins int)
 language sql stable security definer set search_path = public as $$
   select username, rating, games, wins from profiles
   where username is not null and games > 0
@@ -220,7 +221,7 @@ end $$;
 drop function if exists public.match_view(uuid);
 create or replace function public.match_view(match_id uuid)
 returns table (id uuid, seed bigint, starts_at timestamptz, done boolean,
-               me_score int, them_score int, me_delta int, them_name citext, them_rating int, me_rating int,
+               me_score int, them_score int, me_delta int, them_name text, them_rating int, me_rating int,
                server_now timestamptz)
 language sql stable security definer set search_path = public as $$
   select m.id, m.seed, m.starts_at, m.done,

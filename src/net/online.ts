@@ -43,7 +43,7 @@ export interface ScoreRow {
   username: string;
   score: number;
   rating: number;
-  at: string;
+  played_at: string;
 }
 
 export interface RatingRow {
@@ -71,6 +71,17 @@ export function onAuthChange(fn: () => void): () => void {
   if (!online) return () => {};
   const { data } = db().auth.onAuthStateChange(() => fn());
   return () => data.subscription.unsubscribe();
+}
+
+/** Whether Google sign-in is switched on in the project, so the button shows only when it works. */
+export async function googleEnabled(): Promise<boolean> {
+  if (!online) return false;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/settings`, { headers: { apikey: SUPABASE_ANON_KEY } });
+    return Boolean((await res.json())?.external?.google);
+  } catch {
+    return false;
+  }
 }
 
 export async function signInWithGoogle(next = '#/play') {
