@@ -36,6 +36,8 @@ export interface Prefs {
   /** Rating (Elo-style) and its highest point. */
   rating: number;
   ratingPeak: number;
+  /** Best score in the 120-second test on this device. */
+  blitzBest: number;
 }
 
 export interface SaveResult {
@@ -87,6 +89,7 @@ export const DEFAULT_PREFS: Prefs = {
   challengeBest: 1,
   rating: 1000,
   ratingPeak: 1000,
+  blitzBest: 0,
 };
 
 /** Better runs sort first. Sprint: most correct, then accuracy. Twenty: most correct, then fastest. */

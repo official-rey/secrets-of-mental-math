@@ -2,14 +2,15 @@ import { APP_NAME, DEV_CREDIT } from '../theme';
 import { h, type Child } from './dom';
 import { ICONS } from './icons';
 
-export type Section = 'home' | 'learn' | 'train' | 'challenge' | 'chains' | 'stats' | 'settings';
+export type Section = 'home' | 'learn' | 'train' | 'challenge' | 'chains' | 'play' | 'stats' | 'settings';
 
-/** The four parts of the app, in the order you use them. */
+/** The five parts of the app, in the order you use them. */
 export const SECTIONS: { id: Section; label: string; href: string; icon: keyof typeof ICONS }[] = [
   { id: 'learn', label: 'Learn', href: '#/learn', icon: 'learn' },
   { id: 'train', label: 'Train', href: '#/train', icon: 'train' },
   { id: 'challenge', label: 'Challenge', href: '#/challenge', icon: 'challenge' },
   { id: 'chains', label: 'Chains', href: '#/chain', icon: 'chains' },
+  { id: 'play', label: 'Play', href: '#/play', icon: 'versus' },
 ];
 
 const EXTRA: { id: Section; label: string; href: string; icon: keyof typeof ICONS }[] = [
@@ -37,7 +38,7 @@ export function topbar(opts: { back?: { href: string; label: string }; active?: 
   return h('header', { class: 'topbar' }, left, nav, icons);
 }
 
-/** Bottom tab bar for phones: Learn, Train, Challenge, Chains. */
+/** Bottom tab bar for phones: Learn, Train, Challenge, Chains, Play. */
 export function tabbar(active?: Section): HTMLElement {
   return h(
     'nav',

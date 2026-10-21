@@ -13,6 +13,7 @@ export const ICONS = {
   chains: icon('<path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/>'),
   info: icon('<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>'),
   pause: icon('<path d="M9 6v12M15 6v12"/>'),
+  versus: icon('<path d="M4 4l7 7M4 8V4h4M20 4l-7 7M20 8V4h-4"/><path d="M7 17l-3 3M17 17l3 3"/><path d="M5.5 13.5l5 5M18.5 13.5l-5 5"/>'),
   play: icon('<path d="M8 5.5l11 6.5-11 6.5z"/>'),
   skip: icon('<path d="M6 6l7 6-7 6zM16 6v12"/>'),
   hint: icon('<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>'),

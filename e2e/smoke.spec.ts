@@ -170,10 +170,10 @@ test('learn teaches; train picks techniques and starts', async ({ page }) => {
   await expect(page.getByTestId('problem')).toHaveText(/[+−]/);
 });
 
-test('home: the name, one line, the four sections; nothing to scroll for', async ({ page }) => {
+test('home: the name, one line, the five sections; nothing to scroll for', async ({ page }) => {
   await page.goto('/?e2e=1#/');
   const viewport = page.viewportSize()!;
-  for (const id of ['home-learn', 'home-train', 'home-challenge', 'home-chains']) {
+  for (const id of ['home-learn', 'home-train', 'home-challenge', 'home-chains', 'home-play']) {
     const box = (await page.getByTestId(id).boundingBox())!;
     expect(box.y + box.height).toBeLessThan(viewport.height);
   }
@@ -246,4 +246,22 @@ test('the Train Start button is not hidden behind the tab bar', async ({ page })
   expect(start!.y + start!.height).toBeLessThanOrEqual(tabs!.y + 1);
   await page.getByTestId('start-train').tap();
   await expect(page.getByTestId('problem')).toBeVisible();
+});
+
+test('120 seconds: each answer is taken the moment it is right, on the pad', async ({ page }) => {
+  await page.goto('/?e2e=1#/');
+  await page.getByTestId('tab-play').tap();
+  await page.getByTestId('play-solo').tap();
+  const mm = () => page.evaluate(() => (window as unknown as { __mm: { answer(): number } }).__mm.answer());
+  for (let i = 0; i < 3; i++) {
+    for (const d of String(await mm())) await page.locator(`[data-key="${d}"]`).tap();
+  }
+  await expect(page.getByTestId('stat')).toHaveText(/· 3$/);
+  // A wrong digit waits for a fix: nothing is counted.
+  await page.locator('[data-key="0"]').tap();
+  await expect(page.getByTestId('stat')).toHaveText(/· 3$/);
+  await page.evaluate(() => (window as unknown as { __mm: { finish(): void } }).__mm.finish());
+  await expect(page.getByTestId('score')).toHaveText('3');
+  await page.getByTestId('again').tap();
+  await expect(page.getByTestId('stat')).toHaveText(/· 0$/);
 });
