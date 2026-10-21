@@ -7,7 +7,7 @@ import { ROMAN, type Technique } from '../techniques/types';
 import { levelControl, segmented } from './controls';
 import { h, reveal } from './dom';
 import type { View } from './router';
-import { ratingLabel, title } from '../drill/rating';
+import { ratingLabel } from '../drill/rating';
 import { ladder } from './ladder';
 import { layout } from './shell';
 
@@ -139,7 +139,7 @@ export async function challengeView(): Promise<View> {
       'div',
       null,
       h('h1', { class: 'display' }, 'Challenge'),
-      h('p', { class: 'rating-line', 'data-testid': 'rating' }, 'Mental math agility ', h('b', { class: 'mono' }, ratingLabel(prefs.rating)), h('span', { class: 'dim' }, ` · ${title(prefs.rating).name}`)),
+      h('p', { class: 'rating-line', 'data-testid': 'rating' }, 'Rating ', h('b', { class: 'mono' }, ratingLabel(prefs.rating))),
       h(
         'div',
         { class: 'controls' },

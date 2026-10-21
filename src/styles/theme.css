@@ -1,18 +1,17 @@
 :root {
-  --paper: #fbf7ee;
-  --raised: #f3eddd;
-  --ink: #2b2620;
-  --dim: #71685a;
-  --rule: #ddd2b8;
-  --accent: #b4650b;
-  --soft: #f1e0c4;
-  --ok: #4f7359;
-  --bad: #a5432e;
+  --paper: #f4f6f9;
+  --raised: #e9edf2;
+  --ink: #1b2430;
+  --dim: #5b6878;
+  --rule: #cbd3dd;
+  --accent: #2a5785;
+  --soft: #dce5ef;
+  --ok: #3d7357;
+  --bad: #a2443a;
 
-  /* Noto Sans Symbols 2 only supplies the chess pieces; every other character comes from the first font. */
-  --f-head: 'Bricolage Grotesque', 'Noto Sans Symbols 2', system-ui, sans-serif;
-  --f-prose: 'Newsreader', 'Noto Sans Symbols 2', Georgia, 'Times New Roman', serif;
-  --f-mono: 'IBM Plex Mono', 'Noto Sans Symbols 2', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --f-head: 'Space Grotesk', system-ui, sans-serif;
+  --f-prose: 'IBM Plex Sans', system-ui, sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 
   --gutter: 16px;
   --measure: 720px;
@@ -415,7 +414,7 @@ h3 {
 }
 
 .btn.primary:hover {
-  background: #9e5809;
+  background: #214870;
 }
 
 .btn.ink {

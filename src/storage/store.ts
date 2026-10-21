@@ -33,7 +33,7 @@ export interface Prefs {
   chainPick: number;
   /** Highest Challenge level reached (I–X). */
   challengeBest: number;
-  /** Agility rating (Elo-style) and its highest point. */
+  /** Rating (Elo-style) and its highest point. */
   rating: number;
   ratingPeak: number;
 }

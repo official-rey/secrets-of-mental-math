@@ -1,5 +1,5 @@
-﻿import { describe, expect, it } from 'vitest';
-import { deltaLabel, problemRating, rateRun, ratingLabel, START_RATING, title } from '../src/drill/rating';
+import { describe, expect, it } from 'vitest';
+import { deltaLabel, problemRating, rateRun, ratingLabel, START_RATING } from '../src/drill/rating';
 import type { RunEntry, RunRecord } from '../src/drill/types';
 
 const run = (log: Partial<RunEntry>[], over: Partial<RunRecord> = {}): RunRecord => ({
@@ -26,12 +26,9 @@ describe('agility rating', () => {
     expect(rateRun(1234, run([{}], { mode: 'training' }))).toEqual({ rating: 1234, delta: 0 });
   });
 
-  it('chess titles and labels', () => {
+  it('labels: a plain number and a signed change', () => {
     expect(problemRating(1)).toBeLessThan(problemRating(10));
-    expect(title(900).name).toBe('Novice');
-    expect(title(1450)).toEqual({ short: 'CM', name: 'Candidate Master' });
-    expect(ratingLabel(2010)).toBe('GM 2010');
-    expect(ratingLabel(1100)).toBe('1100');
-    expect([deltaLabel(12), deltaLabel(-5), deltaLabel(0)]).toEqual(['▲12', '▼5', '±0']);
+    expect(ratingLabel(2010)).toBe('2010');
+    expect([deltaLabel(12), deltaLabel(-5), deltaLabel(0)]).toEqual(['+12', '−5', '±0']);
   });
 });

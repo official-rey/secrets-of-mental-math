@@ -3,7 +3,6 @@ import { byCategory, techniques } from '../techniques/registry';
 import type { CategoryId, Technique, Tier } from '../techniques/types';
 import { cardBody } from './card';
 import { h } from './dom';
-import { lessons } from './lessons';
 import type { View } from './router';
 import { layout } from './shell';
 
@@ -120,7 +119,6 @@ export async function learnView(parts: string[]): Promise<View> {
     'div',
     null,
     h('h1', { class: 'display' }, 'Learn'),
-    lessons(),
     h('div', { class: 'chips', role: 'tablist', 'aria-label': 'Technique groups' }, chips),
     list,
   );

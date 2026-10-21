@@ -1,4 +1,4 @@
-# Kuwenta
+# Secrets of Mental Math
 
 A mental-arithmetic trainer: learn a technique from one card (idea, worked example, picture), then drill it. Static site, Vite + vanilla TypeScript, no backend.
 
@@ -40,7 +40,6 @@ src/techniques/   registry, types, SVG kit, one module per technique in catalog/
 src/chain/        expression parser/evaluator, expression chains and running-total chains
 src/drill/        drill engine, sounds, drill specs
 src/storage/      Store interface + localStorage implementation (swap for a backend later)
-src/share/        score card PNG and GIF replay, saved to the device
 src/ui/           screens: home, Learn (with the book's six lessons), Train, Challenge, Chains, Stats, Settings, drill (with number pad), results
 src/art/          landing plate (animated only while on screen), background grid and margin columns (CSS transforms, no per-frame script)
 ```

@@ -1,7 +1,6 @@
 import './styles/theme.css';
 import './styles/app.css';
 import { startArt } from './art/background';
-import { sound } from './drill/sound';
 import { store } from './storage/store';
 import { aboutView } from './ui/about';
 import { cardView } from './ui/card';
@@ -19,7 +18,6 @@ import { startRouter } from './ui/router';
 app.art = startArt(document.getElementById('art')!);
 
 store.getPrefs().then((p) => {
-  sound.muted = p.muted;
   app.art?.setEnabled(p.art);
   startRouter(
     document.getElementById('app')!,

@@ -1,5 +1,3 @@
-import { sound } from '../drill/sound';
-import { store } from '../storage/store';
 import { APP_NAME, DEV_CREDIT } from '../theme';
 import { h, type Child } from './dom';
 import { ICONS } from './icons';
@@ -19,23 +17,7 @@ const EXTRA: { id: Section; label: string; href: string; icon: keyof typeof ICON
   { id: 'settings', label: 'Settings', href: '#/settings', icon: 'settings' },
 ];
 
-export function soundToggle(): HTMLButtonElement {
-  const btn = h('button', { class: 'iconbtn', type: 'button', 'data-testid': 'mute' });
-  const paint = () => {
-    btn.innerHTML = sound.muted ? ICONS.soundOff : ICONS.soundOn;
-    btn.setAttribute('aria-label', sound.muted ? 'Unmute sounds' : 'Mute sounds');
-    btn.setAttribute('aria-pressed', String(sound.muted));
-  };
-  btn.addEventListener('click', () => {
-    sound.muted = !sound.muted;
-    store.setPrefs({ muted: sound.muted });
-    paint();
-  });
-  paint();
-  return btn;
-}
-
-/** Top bar: back link or wordmark, section links on wide screens, Stats/Settings icons on phones, mute. */
+/** Top bar: back link or wordmark, section links on wide screens, Stats/Settings icons on phones. */
 export function topbar(opts: { back?: { href: string; label: string }; active?: Section } = {}): HTMLElement {
   const left = opts.back
     ? h('a', { class: 'iconbtn back', href: opts.back.href, html: `${ICONS.back}<span>${opts.back.label}</span>` })
@@ -52,7 +34,7 @@ export function topbar(opts: { back?: { href: string; label: string }; active?: 
       h('a', { class: 'iconbtn', href: s.href, 'aria-label': s.label, 'aria-current': s.id === opts.active ? 'page' : null, 'data-testid': `top-${s.id}`, html: ICONS[s.icon] }),
     ),
   );
-  return h('header', { class: 'topbar' }, left, nav, icons, soundToggle());
+  return h('header', { class: 'topbar' }, left, nav, icons);
 }
 
 /** Bottom tab bar for phones: Learn, Train, Challenge, Chains. */

@@ -1,4 +1,3 @@
-import { sound } from '../drill/sound';
 import { store, type KeypadPref } from '../storage/store';
 import { app } from './context';
 import { segmented } from './controls';
@@ -61,15 +60,6 @@ export async function settingsView(): Promise<View> {
           (keypad) => store.setPrefs({ keypad }),
         ),
       ),
-      h('h2', { class: 'section-head' }, 'Feedback'),
-      row(
-        'Sound',
-        null,
-        onOff('Sound', !p.muted, (on) => {
-          sound.muted = !on;
-          store.setPrefs({ muted: !on });
-        }),
-      ),
       row('Vibration', null, onOff('Vibration', p.haptics, (haptics) => store.setPrefs({ haptics }))),
       h('h2', { class: 'section-head' }, 'Display'),
       row(
@@ -84,7 +74,7 @@ export async function settingsView(): Promise<View> {
       row('Runs and bests', null, erase),
       status,
       h('h2', { class: 'section-head' }, 'About'),
-      h('a', { class: 'menu-row', href: '#/about', 'data-testid': 'about-link' }, h('span', { class: 'menu-title' }, 'Kuwenta and its maker'), h('span', { class: 'arrow' }, '→')),
+      h('a', { class: 'menu-row', href: '#/about', 'data-testid': 'about-link' }, h('span', { class: 'menu-title' }, 'About'), h('span', { class: 'arrow' }, '→')),
     ),
   );
 

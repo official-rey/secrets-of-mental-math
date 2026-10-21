@@ -29,7 +29,6 @@ test('completes a 20-problem run and records it', async ({ page }) => {
   // Every problem gets solved (the miss was retried), so the score is the time.
   await expect(page.getByTestId('score')).toHaveText(/^\d+\.\d$/);
   await expect(page.locator('.score-caption')).toHaveText('for 20/20 problems');
-  await expect(page.getByTestId('new-trophies')).toContainText('First run');
   await expect(page.getByTestId('leaderboard').locator('tbody tr')).toHaveCount(1);
   await expect(page.getByText('Personal best')).toBeVisible();
   // First time: add a name to the leaderboard; the run picks it up.
@@ -79,7 +78,8 @@ test('sprint: a wrong answer is retried and costs time; the combo pays out at 5'
   await expect(page.getByTestId('streak')).toHaveText('combo 3/5');
   await answer(page, true);
   await answer(page, true);
-  await expect(page.getByTestId('toast')).toHaveText('Combo 5! +3 s');
+  // Combo 5 pays 3 s on top of the usual 1 s.
+  await expect(page.locator('.bonus')).toHaveText('+4 s');
 });
 
 test('timed: pause stops the clock, skip counts as a miss', async ({ page }) => {
@@ -170,23 +170,14 @@ test('learn teaches; train picks techniques and starts', async ({ page }) => {
   await expect(page.getByTestId('problem')).toHaveText(/[+−]/);
 });
 
-test('landing: the first screen is the four parts and the book; the why is below the fold', async ({ page }) => {
+test('home: the name, one line, the four sections; nothing to scroll for', async ({ page }) => {
   await page.goto('/?e2e=1#/');
   const viewport = page.viewportSize()!;
   for (const id of ['home-learn', 'home-train', 'home-challenge', 'home-chains']) {
     const box = (await page.getByTestId(id).boundingBox())!;
     expect(box.y + box.height).toBeLessThan(viewport.height);
   }
-  await expect(page.locator('.book-cover')).toBeInViewport();
-  const why = (await page.getByTestId('why').boundingBox())!;
-  expect(why.y).toBeGreaterThanOrEqual(viewport.height - 70);
-  // The demo rewrites one line in place until it reaches the answer.
-  await page.getByTestId('why').scrollIntoViewIfNeeded();
-  const line = page.getByTestId('demo').locator('.morph-line');
-  const first = await line.textContent();
-  await expect.poll(() => line.textContent(), { timeout: 5000 }).not.toBe(first);
-  await expect(page.getByTestId('demo').locator('.tok.is-answer')).toHaveCount(3, { timeout: 25000 });
-  await expect(line).toHaveText('517');
+  await expect(page.locator('h1')).toHaveText('Secrets of Mental Math');
 });
 
 test('trig drills add a minus key; negative answers can be typed on the pad', async ({ page }) => {
@@ -210,37 +201,30 @@ test('trig drills add a minus key; negative answers can be typed on the pad', as
   throw new Error('no negative answer came up');
 });
 
-test('learn: the key takeaways start open, each with its picture, and fold away', async ({ page }) => {
+test('learn: techniques only, each with its worked steps and picture', async ({ page }) => {
   await page.goto('/?e2e=1#/learn');
-  const takeaways = page.getByTestId('lessons');
-  await expect(takeaways.locator('summary')).toHaveText('Key takeaways to improve mental math');
-  await expect(page.locator('.lesson .graphic')).toHaveCount(6);
-  await expect(page.locator('.lesson').first()).toContainText('Work left to right.');
-  await takeaways.locator('summary').tap();
-  await expect(page.locator('.lesson').first()).toBeHidden();
+  await expect(page.getByTestId('lessons')).toHaveCount(0);
   await page.getByRole('tab', { name: /Higher math/ }).tap();
   await page.getByTestId('open-trig-special').tap();
   await expect(page.locator('.tech.open .figure-problem')).toHaveText('cos 120° = ?');
 });
 
-test('endless: hearts go down on misses and the run ends on the last one', async ({ page }) => {
+test('endless: lives go down on misses and the run ends on the last one', async ({ page }) => {
   await page.goto('/?e2e=1#/drill?k=technique&ids=times-11&l=1&m=endless');
-  await expect(page.getByTestId('stat')).toHaveText('♥♥♥ · ✓0');
+  await expect(page.getByTestId('stat')).toHaveText('Lives 3 · ✓0');
   await answer(page, true);
   await answer(page, false);
-  await expect(page.getByTestId('stat')).toHaveText('♥♥♡ · ✓1');
+  await expect(page.getByTestId('stat')).toHaveText('Lives 2 · ✓1');
   await answer(page, false);
   await answer(page, false);
   await expect(page.getByTestId('results')).toBeVisible();
   await expect(page.getByTestId('score')).toHaveText('1');
 });
 
-test('about: the maker is on the About page, not the landing', async ({ page }) => {
-  await page.goto('/?e2e=1#/');
-  await expect(page.getByText('Central Mindanao University')).toHaveCount(0);
-  await page.getByTestId('top-settings').tap();
+test('about: credit on the About page', async ({ page }) => {
+  await page.goto('/?e2e=1#/settings');
   await page.getByTestId('about-link').tap();
-  await expect(page.getByTestId('maker')).toContainText('Central Mindanao University');
+  await expect(page.getByText(/Benjamin/)).toBeVisible();
 });
 
 test('featured techniques lead Learn and Train; chains can start at a picked level', async ({ page }) => {

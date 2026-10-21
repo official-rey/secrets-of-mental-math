@@ -1,8 +1,6 @@
-import { comboBonus, DrillSession, nextCombo, TWENTY, type Attempt } from '../drill/engine';
-import { sound } from '../drill/sound';
-import { drillKey, drillName, parseSpec, ROMAN } from '../drill/spec';
+import { DrillSession, nextCombo, TWENTY, type Attempt } from '../drill/engine';
+import { drillName, parseSpec, ROMAN } from '../drill/spec';
 import { rateRun } from '../drill/rating';
-import { newTrophies } from '../drill/trophies';
 import type { DrillSpec } from '../drill/types';
 import { store } from '../storage/store';
 import { getTechnique } from '../techniques/registry';
@@ -12,9 +10,7 @@ import { h } from './dom';
 import { ICONS } from './icons';
 import { applyKey, keypad, type PadKey } from './keypad';
 import { go, type View } from './router';
-import { pieceHTML } from './ladder';
 import { setMath } from './math';
-import { soundToggle } from './shell';
 import { renderStepper, renderSteps } from './steps';
 
 export function backHref(spec: DrillSpec): string {
@@ -27,8 +23,6 @@ const sizeClass = (text: string) => (text.length <= 9 ? 'xl' : text.length <= 15
 
 const secs = (ms: number) => (ms / 1000).toFixed(1);
 
-/** Streak lengths that get a cheer: 5, 10, 15, 20, 25, then every 10. */
-const isMilestone = (n: number) => (n <= 25 ? n % 5 === 0 : n % 10 === 0);
 
 function toolButton(icon: string, label: string, testid: string, onclick: () => void): HTMLButtonElement {
   const b = h('button', { type: 'button', class: 'tool', 'data-testid': testid }, h('span', { class: 'tool-icon', html: icon }), h('span', { class: 'tool-label' }, label));
@@ -58,21 +52,13 @@ export async function drillView(_parts: string[], q: URLSearchParams): Promise<V
   let hints = 0;
   let timer = 0;
   let feedbackTimer = 0;
-  let toastTimer = 0;
 
-  // Sprint and Endless targets to beat during the run: your best, and your average, on this drill.
-  const key = drillKey(spec);
+  // Sprint and Endless show a clock bar.
   const counted = spec.mode === 'sprint' || spec.mode === 'endless';
-  const bestRun = counted ? await store.best(key, spec.mode) : null;
-  const past = counted ? (await store.history()).filter((r) => r.drillKey === key && r.mode === spec.mode) : [];
-  const average = past.length >= 2 ? past.reduce((a, r) => a + r.correct, 0) / past.length : 0;
-  let passedAverage = false, passedBest = false;
   // Chains and Challenge remember the highest rung reached.
   const climbs = spec.kind === 'chain' || !!spec.ladder;
   const bestKey = spec.kind === 'chain' ? 'chainBest' : 'challengeBest';
   let ladderBest = prefs[bestKey];
-  /** Time of first-try answers so far, for spotting a brilliant (unusually fast) one. */
-  let cleanMs = 0, cleanCount = 0;
 
   // ----- Elements -----
   const levelTag = h('div', { class: 'level-tag', 'data-testid': 'level' });
@@ -99,7 +85,6 @@ export async function drillView(_parts: string[], q: URLSearchParams): Promise<V
   });
   const form = h('form', { class: 'answer-form', novalidate: true }, input);
   const feedback = h('div', { class: 'feedback mono', 'aria-live': 'polite', 'data-testid': 'feedback' });
-  const toast = h('div', { class: 'toast', 'aria-live': 'polite', 'data-testid': 'toast' });
   const solution = h('div', { class: 'solution', hidden: true, 'data-testid': 'solution' });
   const resumeBtn = h('button', { class: 'btn ink', type: 'button', 'data-testid': 'resume', onclick: () => togglePause() }, 'Resume', h('span', { class: 'arrow' }, '→'));
   const pausedCover = h('div', { class: 'paused-cover', hidden: true }, h('h2', null, 'Paused'), h('p', { class: 'dim' }, 'The clock is stopped.'), resumeBtn);
@@ -130,10 +115,9 @@ export async function drillView(_parts: string[], q: URLSearchParams): Promise<V
       h('div', { class: 'drill-title' }, drillName(spec)),
       h('div', { class: 'stat-wrap' }, streakEl, stat, bonus),
       doneBtn,
-      soundToggle(),
     ),
     progress,
-    h('main', { class: 'drill-stage' }, toast, levelTag, tag, problem, hint, hintSteps, form, feedback, solution, pausedCover),
+    h('main', { class: 'drill-stage' }, levelTag, tag, problem, hint, hintSteps, form, feedback, solution, pausedCover),
     dock,
   );
 
@@ -150,7 +134,7 @@ export async function drillView(_parts: string[], q: URLSearchParams): Promise<V
       if (left <= 0 && state !== 'done') end();
     } else if (spec.mode === 'endless') {
       const lives = session.lives;
-      stat.textContent = `${'♥'.repeat(Math.max(0, lives))}${'♡'.repeat(Math.max(0, 3 - lives))} · ✓${ok}`;
+      stat.textContent = `Lives ${Math.max(0, lives)} · ✓${ok}`;
       // The bar is this problem's clock; it gets shorter the more you solve.
       const left = session.problemRemaining();
       bar.style.width = `${(100 * left) / session.problemLimit()}%`;
@@ -173,16 +157,6 @@ export async function drillView(_parts: string[], q: URLSearchParams): Promise<V
     streakEl.classList.remove('pop');
     void streakEl.offsetWidth;
     if (n >= 3) streakEl.classList.add('pop');
-  }
-
-  /** A short cheer over the problem: milestones, a new best, passing your average. */
-  function cheer(text: string) {
-    clearTimeout(toastTimer);
-    toast.textContent = text;
-    toast.classList.remove('show');
-    void toast.offsetWidth;
-    toast.classList.add('show');
-    toastTimer = window.setTimeout(() => toast.classList.remove('show'), 1600);
   }
 
   /** The current technique's lesson (example and picture) in a sheet over the problem. */
@@ -232,9 +206,8 @@ export async function drillView(_parts: string[], q: URLSearchParams): Promise<V
   /** "Level I → III" while the drill is still climbing to the chosen level, then just the level. */
   function paintLevel() {
     const cur = session.level, target = spec.level;
-    // Chains and Challenge climb a ladder of pieces as far as you can take them: no target to show.
-    if (climbs) levelTag.innerHTML = `<span class="piece">${pieceHTML(cur)}</span> Level ${ROMAN[cur]}`;
-    else levelTag.textContent = cur < target ? `Level ${ROMAN[cur]} → ${ROMAN[target]}` : `Level ${ROMAN[cur]}`;
+    // Chains and Challenge climb as far as you can take them: no target to show.
+    levelTag.textContent = climbs ? `Level ${ROMAN[cur]}` : cur < target ? `Level ${ROMAN[cur]} → ${ROMAN[target]}` : `Level ${ROMAN[cur]}`;
   }
 
   /** Brief "+2 s" beside the clock when a correct sprint answer adds time. */
@@ -305,38 +278,13 @@ export async function drillView(_parts: string[], q: URLSearchParams): Promise<V
     input.focus();
   }
 
-  /** Cheers for a right answer: streak milestones, and passing your average or best in a sprint. */
+  /** After a right answer: the combo count, and a rung reached for the first time is kept. */
   function reward(a: Attempt) {
     paintStreak(a.streak);
-    // A rung never reached before is unlocked for good.
     if (climbs && a.levelUp && a.levelUp > ladderBest) {
       ladderBest = a.levelUp;
       store.setPrefs({ [bestKey]: ladderBest });
-      sound.best();
-      cheer(`Level ${ROMAN[a.levelUp]} unlocked!`);
-      toast.insertAdjacentHTML('afterbegin', `<span class="piece">${pieceHTML(a.levelUp)}</span> `);
-      return;
     }
-    if (counted && bestRun && !passedBest && session.correct > bestRun.correct) {
-      passedBest = passedAverage = true;
-      sound.best();
-      return cheer('New best! Galing!');
-    }
-    if (counted && average && !passedAverage && session.correct > average) {
-      passedAverage = true;
-      sound.best();
-      return cheer('Lampas na sa average mo!');
-    }
-    // Sprint pays out at combo milestones (5, 12, 20, 30, …), with extra time.
-    if (a.combo) {
-      sound.milestone();
-      return cheer(`Combo ${a.combo}! +${comboBonus(a.combo) / 1000} s`);
-    }
-    if (spec.mode !== 'sprint' && a.streak > 0 && isMilestone(a.streak)) {
-      sound.milestone();
-      return cheer(`${a.streak} in a row! Galing!`);
-    }
-    sound.correct(a.streak);
   }
 
   function submit() {
@@ -348,22 +296,14 @@ export async function drillView(_parts: string[], q: URLSearchParams): Promise<V
     paintStats();
     if (a.ok) {
       reward(a);
-      // Chess-style: an unusually fast first try is brilliant (!!).
-      const brilliant = a.streak > 0 && cleanCount >= 3 && a.ms < 0.6 * (cleanMs / cleanCount);
-      if (a.streak > 0) (cleanMs += a.ms), cleanCount++;
-      const mark = brilliant ? ' !!' : '';
-      flash(a.levelUp ? `✓ ${fmt(a.problem.answer)}${mark} · Level ${ROMAN[a.levelUp]}` : `✓ ${fmt(a.problem.answer)}${mark}`, 'ok');
+      flash(a.levelUp ? `✓ ${fmt(a.problem.answer)} · Level ${ROMAN[a.levelUp]}` : `✓ ${fmt(a.problem.answer)}`, 'ok');
       showBonus(a);
       paintLevel();
       input.classList.add('is-ok');
       return next();
     }
     // A miss is forgiven: shake, clear, and try the same problem again. In Endless it costs a life.
-    if (a.done) {
-      sound.wrong();
-      return end();
-    }
-    sound.wrong();
+    if (a.done) return end();
     buzz(40);
     paintStreak(0);
     input.value = '';
@@ -371,7 +311,7 @@ export async function drillView(_parts: string[], q: URLSearchParams): Promise<V
     void input.offsetWidth;
     input.classList.add('is-wrong');
     showBonus(a);
-    flash(a.lifeLost ? '?? −1 ♥ · try again' : '?? Sayang, try again', 'bad');
+    flash(a.lifeLost ? 'Incorrect, −1 life' : 'Incorrect, try again', 'bad');
     // While training, each miss also shows one more line of the method.
     if (!timed) showHint();
     input.focus();
@@ -393,7 +333,6 @@ export async function drillView(_parts: string[], q: URLSearchParams): Promise<V
   /** Endless: the problem's clock ran out. It costs a life; the answer shows and the run moves on. */
   function timeUp() {
     const a = session.skip();
-    sound.wrong();
     buzz(40);
     paintStreak(0);
     if (session.isFinished()) return end();
@@ -438,11 +377,10 @@ export async function drillView(_parts: string[], q: URLSearchParams): Promise<V
     clearInterval(timer);
     session.finish();
     if (session.log.length === 0) return go(backHref(spec));
-    sound.finish();
     const run = session.result();
     const p = await store.getPrefs();
     if (p.nickname) run.player = p.nickname;
-    // Timed runs move the agility rating.
+    // Timed runs move the rating.
     if (timed) {
       const r = rateRun(p.rating, run);
       run.rating = r.rating;
@@ -450,11 +388,10 @@ export async function drillView(_parts: string[], q: URLSearchParams): Promise<V
       await store.setPrefs({ rating: r.rating, ratingPeak: Math.max(p.ratingPeak, r.rating) });
     }
     const saved = await store.saveRun(run);
-    // Lifetime totals and trophies.
+    // Lifetime total.
     const solved = p.solved + run.correct;
-    const earned = newTrophies({ run, solved, rating: run.rating ?? p.rating }, p.trophies);
-    await store.setPrefs({ solved, trophies: [...p.trophies, ...earned.map((t) => t.id)] });
-    app.lastResult = { run, saved, spec, trophies: earned.map((t) => t.id) };
+    await store.setPrefs({ solved });
+    app.lastResult = { run, saved, spec };
     go('#/results');
   }
 
@@ -491,7 +428,6 @@ export async function drillView(_parts: string[], q: URLSearchParams): Promise<V
       removeEventListener('resize', fitProblem);
       clearInterval(timer);
       clearTimeout(feedbackTimer);
-      clearTimeout(toastTimer);
       document.body.classList.remove('drilling');
       app.art?.resume();
     },

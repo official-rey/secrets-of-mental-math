@@ -64,7 +64,7 @@ export interface RunRecord {
   accuracy: number;
   /** Longest run of first-try answers. */
   bestStreak?: number;
-  /** Timed runs: agility rating after this run, and how much it moved. */
+  /** Timed runs: rating after this run, and how much it moved. */
   rating?: number;
   ratingDelta?: number;
   totalMs: number;

@@ -1,7 +1,7 @@
 import type { RunRecord } from './types';
 
 /**
- * Agility rating: an Elo rating for mental math, in the spirit of a chess puzzle rating.
+ * Rating: an Elo rating for mental arithmetic.
  * Each problem in a timed run is a game against an opponent whose strength grows with the
  * problem's level. A first-try solve is a win, a solve after a retry half a win (a little
  * less), a skip or timeout a loss.
@@ -33,26 +33,8 @@ export function rateRun(rating: number, run: RunRecord): { rating: number; delta
   return { rating: next, delta: next - rating };
 }
 
-/** Chess-style titles by rating. */
-const TITLES: [min: number, short: string, name: string][] = [
-  [2000, 'GM', 'Grandmaster'],
-  [1800, 'IM', 'International Master'],
-  [1600, 'FM', 'Master'],
-  [1400, 'CM', 'Candidate Master'],
-  [1000, '', 'Club player'],
-  [0, '', 'Novice'],
-];
+/** The rating as shown: a plain number. */
+export const ratingLabel = (rating: number) => String(rating);
 
-export function title(rating: number): { short: string; name: string } {
-  const [, short, name] = TITLES.find(([min]) => rating >= min)!;
-  return { short, name };
-}
-
-/** "CM 1442" or "1042" */
-export const ratingLabel = (rating: number) => {
-  const t = title(rating);
-  return t.short ? `${t.short} ${rating}` : String(rating);
-};
-
-/** "▲18", "▼6" or "±0" */
-export const deltaLabel = (d: number) => (d > 0 ? `▲${d}` : d < 0 ? `▼${-d}` : '±0');
+/** "+18", "−6" or "±0" */
+export const deltaLabel = (d: number) => (d > 0 ? `+${d}` : d < 0 ? `−${-d}` : '±0');
